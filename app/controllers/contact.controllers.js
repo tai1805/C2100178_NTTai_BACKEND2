@@ -1,4 +1,4 @@
-const ContactService = require("../../services/contact.service");
+const ContactService = require("../services/contact.service");
 const ApiError = require("../api-error");
 const MongoDB = require("../utils/mongodb.util");
 
@@ -71,6 +71,43 @@ exports.findAll = async( req, res, next)=>{
         });
 
     }
+    async findById(id){
+        return await this.contact.findOne({
+             _id:ObjectID.isvalid(id) ? new ObjectID(id) : null,
+         });
+        
+             }
+    async update (id , payload){
+                        const filter = {
+                            _id: ObjectId.isvalid(id) ? new    ObjectId(id): null,
+                
+                       };
+                      const update = this.extractConactData(payload);
+                         const result = await this.contact.findOneAndUpdate(
+                            filter,
+                             {$set: update},
+                             {returnDocument: "after"}
+                        );
+                        return result.value;
+                   }  
+    
+    async delete(id) {
+        const result = await this.Contact.findOneAndDelete({
+        _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+        });
+        return result.value;
+        }
+   
+    async findAllFavorite(){
+        return await this.find({ favortie: true });
+    }
+    
+    async deleteAll(){
+                const result = await this.Contact.deleteMany({});
+                return result.deleteCount;
+            }
+        
+
  }
  //Find a single contact with an id
  exports.findOne = async( req, res, next)=>{
@@ -91,14 +128,6 @@ catch(error){
 }
 
  };
- class contactservice{
-    async findById(id){
-return await this.contact.findOne({
-    _id:ObjectID.isvalid(id) ? new ObjectID(id) : null,
-});
-
-    }
- }
  //Update a contact by the id in the request
  exports.update = async (req, res, next)=>{
     if(Object.keys(req.body).length===0){
@@ -120,23 +149,9 @@ return await this.contact.findOne({
     }
 
  };
- class contactService{
-    async update (id , payload){
-        const filter = {
-            _id: ObjectId.isvalid(id) ? new    ObjectId(id): null,
 
-        };
-        const update = this.extractConactData(payload);
-        const result = await this.contact.findOneAndUpdate(
-            filter,
-            {$set: update},
-            {returnDocument: "after"}
-        );
-        return result.value;
-    } 
- }
  //Delete a contact with specified id in the request
-exports.delete = async( req, res, next)=>{
+ exports.delete = async( req, res, next)=>{
     try{
         const contactService = new ContactService(MongoDB.client);
         const document = await contactService.delete(req.params.id);
@@ -156,14 +171,7 @@ return res.send({message:     "Contact was deleted successfully"});
 
  };
 
- class ContactService{
-    async delete(id){
-        const result = await this.Contact.findOneAndDelete({
-            _id: ObjectId.isvalid(id) ? new ObjectId(id): null,
-        });
-        return result.value;
-    }
- }
+
  //find all favorite contacts of a user
  exports.findAllFavorite = async(_req, res, next)=>{
     try{
@@ -181,15 +189,11 @@ return res.send({message:     "Contact was deleted successfully"});
     }
 
  };
- class ContactService{
-    async findAllFavorite(){
-        return await this.find({ favortie: true });
-    }
- }
+
  //Delete all contact of a user from the database
  exports.deleteAll = async(_req, res, next)=>{
     try{
-        const contactService = new ContactService(MongoDB.client);
+        const contactService = new contactService(MongoDB.client);
         const deleteCount = await contactService.deleteAll();
         return res.send({message: `${deleteCount} contacts were deleted successfully`,
 
@@ -202,9 +206,3 @@ return next( new ApiError (500, "An error occurred while removing all contacts")
 
 
 };
-class ContactService {
-    async deleteAll(){
-        const result = await this.Contact.deleteMany({});
-        return result.deleteCount;
-    }
-}
